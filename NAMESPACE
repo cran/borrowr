@@ -1,0 +1,17 @@
+useDynLib('borrowr')
+
+importFrom("stats", "lm", "relevel", "rgamma", "rnorm", "runif",
+  "model.matrix", "model.response", "terms", "coef",
+  "drop.terms", "na.omit", "nlm", "predict", "qchisq", "sd", "quantile")
+importFrom("utils", "capture.output")
+importFrom(Rcpp, sourceCpp)
+importFrom(mvtnorm, dmvt)
+importFrom(BART, bartModelMatrix)
+
+export(pate)
+
+S3method(print, pate)
+S3method(summary, pate)
+S3method(print, summary.pate)
+
+

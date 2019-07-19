@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+
+<title>Estimating Population Average Treatment Effects with the borrowr Package</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(title);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#header {
+text-align: center;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Estimating Population Average Treatment Effects with the borrowr Package</h1>
+
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>The borrowr package estimates the population average treatment effect (PATE) from a primary data source with borrowing from supplemental sources.</p>
+<p>To adjust for confounding confounding, the estimation is done by fitting a model for the conditional mean given treatment and confounders. Currently, two models are available, a Bayesian linear model with an inverse-gamma prior, and Bayesian Additive Regression Trees (BART). The user must specify a formula for the conditional mean. This requires more thought for the Bayesian linear model as the analyst must carefully consider the functional form of the regression relationship. For BART, the right hand side of the formula need only include the confounders and the treatment variable without specification of the functional form.</p>
+<p>Borrowing between data sources is done with <a href="https://www.ncbi.nlm.nih.gov/pubmed/29036300">Multisource Exchangeability Models</a> (MEMs; Kaizer et al., 2018) . MEMs borrow by assuming that each supplementary data source is either “exchangeable”, or not, with the primary data source. Two data sources are considered exchangeable if their model parameters are equal. Each data source can be exchangeable with the primary data, or not, so if there are <span class="math inline">\(r\)</span> data sources, there are <span class="math inline">\(2 ^ r\)</span> possible configurations regarding the exchangeability assumptions. Each of these configurations corresponds to a single MEM. The parameters for each MEM are estimated, and we compute a posterior probability for each. The posterior density of the PATE is a weighted posterior across all possible MEMs.</p>
+</div>
+<div id="the-adapt-data" class="section level2">
+<h2>The <code>adapt</code> Data</h2>
+<p>We illustrate usage of the <code>borrowr</code> package with the <code>adapt</code> data:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">library</span>(borrowr)</a>
+<a class="sourceLine" id="cb1-2" title="2"><span class="kw">data</span>(adapt)</a>
+<a class="sourceLine" id="cb1-3" title="3"><span class="kw">head</span>(adapt)</a>
+<a class="sourceLine" id="cb1-4" title="4"><span class="co">#&gt;           y        x  source treatment</span></a>
+<a class="sourceLine" id="cb1-5" title="5"><span class="co">#&gt; 1  97.37711 55.51128 Primary         1</span></a>
+<a class="sourceLine" id="cb1-6" title="6"><span class="co">#&gt; 2  87.29579 26.38264 Primary         0</span></a>
+<a class="sourceLine" id="cb1-7" title="7"><span class="co">#&gt; 3  93.07157 41.99595 Primary         0</span></a>
+<a class="sourceLine" id="cb1-8" title="8"><span class="co">#&gt; 4  83.78115 32.49223 Primary         0</span></a>
+<a class="sourceLine" id="cb1-9" title="9"><span class="co">#&gt; 5  96.03471 36.34139 Primary         1</span></a>
+<a class="sourceLine" id="cb1-10" title="10"><span class="co">#&gt; 6 100.89876 58.61346 Primary         1</span></a></code></pre></div>
+<p>The data include 3 data sources with a univariate confounding variable <code>x</code> and the treatment variable <code>treatment</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw">library</span>(ggplot2)</a>
+<a class="sourceLine" id="cb2-2" title="2"><span class="kw">ggplot</span>(<span class="dt">data =</span> adapt, <span class="dt">mapping =</span> <span class="kw">aes</span>(<span class="dt">x =</span> x, <span class="dt">y =</span> y, <span class="dt">color =</span> <span class="kw">as.factor</span>(treatment))) <span class="op">+</span></a>
+<a class="sourceLine" id="cb2-3" title="3"><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></a>
+<a class="sourceLine" id="cb2-4" title="4"><span class="st">  </span><span class="kw">geom_smooth</span>(<span class="dt">se =</span> <span class="ot">FALSE</span>) <span class="op">+</span></a>
+<a class="sourceLine" id="cb2-5" title="5"><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span><span class="st"> </span>source) <span class="op">+</span></a>
+<a class="sourceLine" id="cb2-6" title="6"><span class="st">  </span><span class="kw">theme_classic</span>()</a>
+<a class="sourceLine" id="cb2-7" title="7"><span class="co">#&gt; `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</span></a></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --> We will estimate the PATE while adjusting for the confounding variable <code>x</code>.</p>
+</div>
+<div id="using-the-pate-function-to-estimate-the-pate" class="section level2">
+<h2>Using the <code>pate</code> function to estimate the PATE</h2>
+<p><code>pate</code> is the primary function of the borrowr package. The following arguments are <em>required</em>:</p>
+<ul>
+<li><code>formula</code>: a formula specifying the conditional mean model. It must include the treatment variable and the confounders. It should <em>not</em> include a variable indicating the data source.</li>
+<li><code>estimator</code>: either <code>&quot;BART&quot;</code> or <code>bayesian_lm</code>. The default is <code>&quot;BART&quot;</code></li>
+<li><code>data</code>: a data frame from which the PATE is estimated. It must include all the variables in the formula, and it must also include a character variable indicating the data sources.</li>
+<li><code>src_var</code>: a character variable indicating which column of the data indicates the data source, e.g., source a, b, or c.</li>
+<li><code>primary_source</code>: a character variable indicating which value of <code>src_var</code> is the primary data source.</li>
+<li><code>trt_var</code>: a character variable indicating which column of the data indicates the treatment variable. This must be included in the formula, and <strong>it must be coded as 1 for treated and 0 for untreated</strong>.</li>
+</ul>
+<p>We will estimate the PATE using a quadratic model for <code>x</code>, allowing for different quadratic relationships between treated and untreated:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">est &lt;-<span class="st"> </span><span class="kw">pate</span>(y <span class="op">~</span><span class="st"> </span>treatment<span class="op">*</span>x <span class="op">+</span><span class="st"> </span>treatment<span class="op">*</span><span class="kw">I</span>(x <span class="op">^</span><span class="st"> </span><span class="dv">2</span>), <span class="dt">data =</span> adapt, </a>
+<a class="sourceLine" id="cb3-2" title="2">  <span class="dt">estimator =</span> <span class="st">&quot;bayesian_lm&quot;</span>, <span class="dt">src_var =</span> <span class="st">&quot;source&quot;</span>, <span class="dt">primary_source =</span> <span class="st">&quot;Primary&quot;</span>, </a>
+<a class="sourceLine" id="cb3-3" title="3">  <span class="dt">trt_var =</span> <span class="st">&quot;treatment&quot;</span>)</a></code></pre></div>
+<p>The <code>print</code> method shows some information about the posterior:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">est</a>
+<a class="sourceLine" id="cb4-2" title="2"><span class="co">#&gt; Population Average Treatment Effect (PATE)</span></a>
+<a class="sourceLine" id="cb4-3" title="3"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb4-4" title="4"><span class="co">#&gt; PATE Posterior Summary Statistics (Treated vs. Untreated)</span></a>
+<a class="sourceLine" id="cb4-5" title="5"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb4-6" title="6"><span class="co">#&gt; Mean Treatment Effect             Std. Dev.          Pr(PATE &gt; 0) </span></a>
+<a class="sourceLine" id="cb4-7" title="7"><span class="co">#&gt;              3.496863              1.534991              1.000000</span></a></code></pre></div>
+<p>And a summary method that gives more info:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw">summary</span>(est)</a>
+<a class="sourceLine" id="cb5-2" title="2"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb5-3" title="3"><span class="co">#&gt; Population Average Treatment Effect (PATE)</span></a>
+<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt; Call:</span></a>
+<a class="sourceLine" id="cb5-6" title="6"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb5-7" title="7"><span class="co">#&gt; pate(formula = y ~ treatment * x + treatment * I(x^2), estimator = &quot;bayesian_lm&quot;, </span></a>
+<a class="sourceLine" id="cb5-8" title="8"><span class="co">#&gt;     data = adapt, src_var = &quot;source&quot;, primary_source = &quot;Primary&quot;, </span></a>
+<a class="sourceLine" id="cb5-9" title="9"><span class="co">#&gt;     trt_var = &quot;treatment&quot;)</span></a>
+<a class="sourceLine" id="cb5-10" title="10"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb5-11" title="11"><span class="co">#&gt; PATE Posterior Summary Statistics (Treated vs. Untreated)</span></a>
+<a class="sourceLine" id="cb5-12" title="12"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb5-13" title="13"><span class="co">#&gt; Mean Treatment Effect             Std. Dev.          Pr(PATE &gt; 0) </span></a>
+<a class="sourceLine" id="cb5-14" title="14"><span class="co">#&gt;              3.496863              1.534991              1.000000 </span></a>
+<a class="sourceLine" id="cb5-15" title="15"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb5-16" title="16"><span class="co">#&gt; Exchangeability Matrix (1 == Exchangeable with primary source):</span></a>
+<a class="sourceLine" id="cb5-17" title="17"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb5-18" title="18"><span class="co">#&gt;          MEM</span></a>
+<a class="sourceLine" id="cb5-19" title="19"><span class="co">#&gt; source    1 2 3 4</span></a>
+<a class="sourceLine" id="cb5-20" title="20"><span class="co">#&gt;   Primary 1 1 1 1</span></a>
+<a class="sourceLine" id="cb5-21" title="21"><span class="co">#&gt;   Supp1   1 0 1 0</span></a>
+<a class="sourceLine" id="cb5-22" title="22"><span class="co">#&gt;   Supp2   1 1 0 0</span></a>
+<a class="sourceLine" id="cb5-23" title="23"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb5-24" title="24"><span class="co">#&gt; MEM Posterior Probability:</span></a>
+<a class="sourceLine" id="cb5-25" title="25"><span class="co">#&gt;        MEM_1        MEM_2        MEM_3        MEM_4 </span></a>
+<a class="sourceLine" id="cb5-26" title="26"><span class="co">#&gt; 1.255412e-02 9.225502e-01 6.489563e-02 5.065254e-09</span></a></code></pre></div>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<p>Chipman, H. &amp; McCulloch, R. (2010) BART: Bayesian additive regression trees. <em>Annals of Applied Statistics</em>, <strong>4</strong>(1): 266-298.</p>
+<p>Kaizer, Alexander M., Koopmeiners, Joseph S., Hobbs, Brian P. (2018) Bayesian hierarchical modeling based on multisource exchangeability. <em>Biostatistics</em>, <strong>19</strong>(2): 169-184.</p>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
