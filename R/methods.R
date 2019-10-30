@@ -16,8 +16,11 @@
 
 
 print.pate <- function(x, ...) {
+  nc <- x$non_compliance
+  nc <- ifelse(nc, "Yes", "No")
   cat("Population Average Treatment Effect (PATE)\n")
-  cat("\nPATE Posterior Summary Statistics (Treated vs. Untreated)\n\n")
+  cat("\nAdjustment for confounding due to noncompliance: ",nc,"\n")
+  cat("\nPATE Posterior Summary Statistics (Treated minus Untreated):\n\n")
   # posterior statistics
   post <- x$pate_post
   psum <- posterior_summary(post)
@@ -33,7 +36,9 @@ summary.pate <- function(object, ...) {
   out$call <- x$call
   out$posterior_summary <- posterior_summary(x$pate_post)
   out$mems <- x$MEMs + 0
+  out$exch_prob <- x$exch_prob
   out$post_probs <- x$post_probs
+  out$non_compliance <- x$non_compliance
   class(out) <- "summary.pate"
   out
 }
@@ -42,12 +47,16 @@ print.summary.pate <- function(x, ...) {
   cat("\nPopulation Average Treatment Effect (PATE)\n")
   cat("\nCall:\n\n")
   print(x$call)
-  cat("\nPATE Posterior Summary Statistics (Treated vs. Untreated)\n\n")
+  nc <- ifelse(x$non_compliance, "Yes", "No")
+  cat("\nAdjustment for confounding due to noncompliance: ",nc,"\n")
+  cat("\nPATE Posterior Summary Statistics (Treated minus Untreated):\n\n")
   # posterior statistics
   post <- x$pate_post
   psum <- x$posterior_summary
   print(psum)
 
+  cat("\nPrior Probability of Exchangeability:\n\n")
+  print(x$exch_prob)
   cat("\nExchangeability Matrix (1 == Exchangeable with primary source):\n\n")
   print(x$mems)
   cat("\nMEM Posterior Probability:\n")

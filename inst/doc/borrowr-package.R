@@ -28,3 +28,14 @@ est
 ## ------------------------------------------------------------------------
 summary(est)
 
+## ------------------------------------------------------------------------
+est2 <- pate(y ~ treatment + x*compliant, 
+  data = adapt, estimator = "bayesian_lm", src_var = "source", primary_source = "Primary", trt_var = "treatment", compliance_var = "compliant")
+summary(est2)
+
+## ------------------------------------------------------------------------
+est3 <- pate(y ~ treatment*x + treatment*I(x ^ 2), data = adapt, 
+  estimator = "bayesian_lm", src_var = "source", primary_source = "Primary", 
+  trt_var = "treatment", exch_prob = c(1 / 3, 1 / 8))
+summary(est3)
+

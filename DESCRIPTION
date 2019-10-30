@@ -1,7 +1,7 @@
 Package: borrowr
 Type: Package
 Title: Estimate Causal Effects with Borrowing Between Data Sources
-Version: 0.1.0
+Version: 0.1.1
 Author: Jeffrey A. Boatman [aut, cre],
   David M. Vock [aut],
   Joseph S. Koopmeiners [aut]
@@ -13,6 +13,7 @@ Description: Estimate population average treatment effects from a primary data s
   information on BART, see Chipman, George, & McCulloch (2010) <doi:10.1214/09-AOAS285>. 
   For information on MEMs, see Kaizer, Koopmeiners, & 
   Hobbs (2018) <doi10.1093/biostatistics/kxx031>.
+Depends: R (>= 3.5.0)
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
@@ -22,6 +23,6 @@ LinkingTo: Rcpp
 Suggests: knitr, rmarkdown, ggplot2
 VignetteBuilder: knitr
 NeedsCompilation: yes
-Packaged: 2019-07-17 21:49:42 UTC; boat0036
+Packaged: 2019-10-30 15:05:55 UTC; boat0036
 Repository: CRAN
-Date/Publication: 2019-07-19 10:00:02 UTC
+Date/Publication: 2019-10-30 15:30:02 UTC

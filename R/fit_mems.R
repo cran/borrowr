@@ -15,13 +15,16 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-fit_mems <- function(mf, estimator, ndpost, ...) {
+fit_mems <- function(mf, estimator, ndpost, exch_prob, ...) {
   # if(estimator != "bayesian_lm")
   #   stop("'bayesian_lm' is currently the only estimator implemented.")
 
   formula <- attr(mf, "formula")
   src_var <- attr(mf, "src_var")
   trt_var <- attr(mf, "trt_var")
+  com_var <- attr(mf, "com_var")
+
+  nc <- !is.na(com_var)
 
   ps <- attr(mf, "primary_source")
   sl <- levels(mf[, src_var])
@@ -45,13 +48,20 @@ fit_mems <- function(mf, estimator, ndpost, ...) {
     MEM    = seq_len(ncol(im))
   )
 
+  prior_mem <- numeric(ncol(im))
+  names(prior_mem) <- seq_len(ncol(im))
+  names(exch_prob)   <- rownames(im)[-1]
+
   mem_pate_post <- array(dim = c(ndpost, ncol(im)))
-  EY0 <- array(dim = c(ndpost, ncol(im)))
-  EY1 <- array(dim = c(ndpost, ncol(im)))
+  mem_EY0 <- array(dim = c(ndpost, ncol(im)))
+  mem_EY1 <- array(dim = c(ndpost, ncol(im)))
   dimnames(mem_pate_post) <- list(
     draw = seq_len(ndpost),
     MEM  = seq_len(ncol(im))
   )
+
+  dimnames(mem_EY0) <- dimnames(mem_pate_post)
+  dimnames(mem_EY1) <- dimnames(mem_pate_post)
 
   # Y <- matrix(model.response(mf, "numeric"), ncol = 1)
   # Y <- mf[, all.vars(formula[[2]])]
@@ -72,15 +82,34 @@ fit_mems <- function(mf, estimator, ndpost, ...) {
     X1 <- Xf[Xf[, src_var] == ps, ]
     X0[, trt_var] <- 0
     X1[, trt_var] <- 1
+    if (nc) {
+      X0[, com_var] <- 1
+      X1[, com_var] <- 1
+    }
     X0 <- as.data.frame(model.matrix(formula, X0))
     X1 <- as.data.frame(model.matrix(formula, X1))
+
+    beta_post_mean <- array(dim = c(ncol(Xm), ncol(im)))
+    beta_post_var  <- array(dim = c(ncol(Xm), ncol(im)))
+    dimnames(beta_post_mean) <- list(
+      coef = colnames(Xm),
+      MEM  = seq_len(ncol(im))
+    )
+    dimnames(beta_post_var) <- list(
+      var  = colnames(Xm),
+      MEM  = seq_len(ncol(im))
+    )
+
   } else if (estimator == "BART") {
     Xm <- Xf[, c(all.vars(formula[[3]]), src_var), drop = FALSE]
+    beta_post_mean <- NA
+    beta_post_var  <- NA
   }
 
   attr(Xm, "src_var") <- src_var
   attr(Xm, "trt_var") <- trt_var
   attr(Xm, "primary_source") <- ps
+  attr(Xm, "com_var") <- com_var
 
   sro <- Xf[, src_var]
   Xs <- split(Xm, sro)
@@ -127,6 +156,8 @@ fit_mems <- function(mf, estimator, ndpost, ...) {
       message(sprintf("Fitting MEM %d of %d ...", mem, ncol(im)))
     cm <- im[, mem]
     # cn <- names(cm)[which(cm)]
+    exch <- 1 * cm[-1]
+    prior_mem[mem] <- prod(exch * exch_prob + (1 - exch) * (1 - exch_prob))
     tfits <- sepfits
     if (any(cm[-1L])) {
       tempX <- do.call(rbind, Xs[cm])
@@ -153,8 +184,12 @@ fit_mems <- function(mf, estimator, ndpost, ...) {
     ll <- sapply(tfits, "[[", "log_marg_like")[c(TRUE, !cm[-1L])]
     log_marg_like[mem] <- sum(ll)
     mem_pate_post[, mem] <- tfits[[1]]$pate_post
-    EY0[, mem] <- tfits[[1]]$EY0
-    EY1[, mem] <- tfits[[1]]$EY1
+    mem_EY0[, mem] <- tfits[[1]]$EY0
+    mem_EY1[, mem] <- tfits[[1]]$EY1
+    if (estimator == "bayesian_lm") {
+      beta_post_mean[, mem] <- colMeans(tfits[[1]]$beta_post)
+      beta_post_var[, mem]  <- apply(tfits[[1]]$beta_post, 2, var)
+    }
   }
 
   # if(estimator == "BART") {
@@ -239,24 +274,34 @@ fit_mems <- function(mf, estimator, ndpost, ...) {
   #   }
   # }
 
-  cons  <- -max(log_marg_like)
-  probs <- exp(cons + log_marg_like) / sum(exp(cons + log_marg_like))
-  # probs[which(is.na(probs))] <- 0
-  pate_post <- sample_posterior(mem_pate_post, probs)
-  EY0 <- sample_posterior(EY0, probs)
-  EY1 <- sample_posterior(EY1, probs)
+  lml <- log_marg_like
+  cons  <- -max(lml)
+  # post_probs <- exp(cons + log_marg_like) / sum(exp(cons + log_marg_like))
+  post_probs <- exp(cons + lml) * prior_mem / sum(exp(cons + lml) * prior_mem)
+  # post_probs[which(is.na(post_probs))] <- 0
+  pate_post <- sample_posterior(mem_pate_post, post_probs)
+
+  # better to return the matrices rather than the
+  # weighted averages.
+  EY0 <- sample_posterior(mem_EY0, post_probs)
+  EY1 <- sample_posterior(mem_EY1, post_probs)
 
   out <- list(
     estimator     = estimator,
     pate_post     = pate_post,
     log_marg_like = log_marg_like,
-    post_probs    = probs,
-    MEMs          = im
+    post_probs    = post_probs,
+    MEMs          = im,
+    exch_prob    = exch_prob
   )
 
   out$mem_pate_post <- mem_pate_post
+  out$mem_EY0 <- mem_EY0
+  out$mem_EY1 <- mem_EY1
   out$EY0 <- EY0
   out$EY1 <- EY1
+  out$beta_post_mean <- beta_post_mean
+  out$beta_post_var  <- beta_post_var
 
   out
 
