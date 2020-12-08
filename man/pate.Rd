@@ -4,8 +4,19 @@
 \alias{pate}
 \title{Population Average Treatment Effect (PATE)}
 \usage{
-pate(formula, estimator = c("BART", "bayesian_lm"), data, src_var,
-  primary_source, exch_prob, trt_var, compliance_var, ndpost = 1000, ...)
+pate(
+  formula,
+  estimator = c("BART", "bayesian_lm"),
+  data,
+  src_var,
+  primary_source,
+  exch_prob,
+  trt_var,
+  compliance_var,
+  ndpost = 1000,
+  model_prior = c("none", "power", "powerlog"),
+  ...
+)
 }
 \arguments{
 \item{formula}{An object of class formula. The left hand side must be the outcome,
@@ -42,6 +53,9 @@ noncompliant, 1 for compliant. If this argument is specified, the formula must a
 include the compliance variable.}
 
 \item{ndpost}{number of draws from the posterior}
+
+\item{model_prior}{specifices the prior probability of exchangebility of data sources. Details for priors
+are given in Boatman et al. (2020).}
 
 \item{...}{additional arguments passed to BART}
 }
@@ -146,4 +160,7 @@ of Applied Statistics, 4(1): 266-298.
 Kaizer, Alexander M., Koopmeiners, Joseph S., Hobbs, Brian P. (2018) Bayesian
 hierarchical modeling based on multisource exchangeability. Biostatistics,
 19(2): 169-184.
+
+Boatman, Jeffrey A., Vock, David. M, and Koopmeiners, Joseph S. (2020) Borrowing from
+Supplemental Sources to Estimate Causal Effects from a Primary Data Source. arXiv:2003.09680
 }

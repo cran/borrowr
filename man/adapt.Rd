@@ -4,7 +4,8 @@
 \name{adapt}
 \alias{adapt}
 \title{Data set used in the package vignette}
-\format{A data frame with 180 rows and 5 variables
+\format{
+A data frame with 180 rows and 5 variables
 \describe{
   \item{y}{the outcome}
   \item{x}{a variable associated with y and treatment}
@@ -12,7 +13,8 @@
   \item{treatment}{treatment variable. 1 = treated, 0 = untreated}
   \item{compliant}{compliance indicator. 1 = compliant to treatment,
   0 = noncompliant to treatment}
-}}
+}
+}
 \usage{
 adapt
 }
